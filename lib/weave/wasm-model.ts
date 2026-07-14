@@ -50,128 +50,153 @@ export interface NeedleClient {
   selfcheck(): Promise<SelfCheck>;
 }
 
-let worker: Worker | null = null;
-let clientPromise: Promise<NeedleClient> | null = null;
-let inferId = 0;
-const pending = new Map<
-  number,
-  {
-    resolve: (v: InferResult | SelfCheck) => void;
-    reject: (e: Error) => void;
-  }
->();
-const progressListeners = new Set<(p: LoadProgress) => void>();
-let loadReject: ((e: Error) => void) | null = null;
+/** Per-request resolver, stored id-keyed. `resolve` is widened to `unknown` so
+ * infer/selfcheck share one map without an unsound union cast at the call site;
+ * the message handler always feeds it a concrete InferResult/SelfCheck. */
+type Pending = { resolve: (v: unknown) => void; reject: (e: Error) => void };
 
-/** A crashed worker rejects everything in flight and is discarded so the
- * next command spawns a fresh one (and wasmNeedle falls back to the mock). */
-function crash(message: string) {
-  const err = new Error(message);
-  loadReject?.(err);
-  loadReject = null;
-  for (const p of pending.values()) p.reject(err);
-  pending.clear();
-  progressListeners.clear();
-  worker?.terminate();
-  worker = null;
+/** Outbound request minus its correlation id (assigned per send in `request`). */
+type RequestBody =
+  | { type: "infer"; query: string; tools: string }
+  | { type: "selfcheck" };
+
+/** Owns one worker's lifecycle: spawn, request correlation, crash/reset, and
+ * the one-time load (with retry-on-failure). One default instance backs the
+ * module exports; tests construct their own with an injected `spawn`. */
+export class WorkerClient {
+  private worker: Worker | null = null;
+  private clientPromise: Promise<NeedleClient> | null = null;
+  private inferId = 0;
+  private readonly pending = new Map<number, Pending>();
+  private readonly progressListeners = new Set<(p: LoadProgress) => void>();
+  private loadReject: ((e: Error) => void) | null = null;
+
+  constructor(
+    private readonly spawn: () => Worker = () =>
+      new Worker(new URL("./needle-worker.ts", import.meta.url)),
+  ) {}
+
+  /** A crashed worker rejects everything in flight and is discarded so the
+   * next command spawns a fresh one (and wasmNeedle falls back to the mock). */
+  private crash(message: string) {
+    const err = new Error(message);
+    this.loadReject?.(err);
+    this.loadReject = null;
+    for (const p of this.pending.values()) p.reject(err);
+    this.pending.clear();
+    this.progressListeners.clear();
+    this.worker?.terminate();
+    this.worker = null;
+  }
+
+  private getWorker(): Worker {
+    if (!this.worker) {
+      const worker = this.spawn();
+      worker.onerror = (e) => this.crash(e.message || "needle worker crashed");
+      worker.onmessageerror = () => this.crash("needle worker message error");
+      worker.onmessage = (e: MessageEvent<WorkerResponse>) => {
+        const msg = e.data;
+        if (msg.type === "progress") {
+          for (const cb of this.progressListeners) cb(msg);
+        } else if (msg.type === "result") {
+          this.pending.get(msg.id)?.resolve({
+            text: msg.text,
+            backend: msg.backend,
+            encodeMs: msg.encodeMs,
+            decodeMs: msg.decodeMs,
+          } satisfies InferResult);
+          this.pending.delete(msg.id);
+        } else if (msg.type === "selfcheck") {
+          this.pending.get(msg.id)?.resolve({
+            maxDiff: msg.maxDiff,
+            meanDiff: msg.meanDiff,
+            backend: msg.backend,
+          } satisfies SelfCheck);
+          this.pending.delete(msg.id);
+        } else if (msg.type === "error" && msg.id !== undefined) {
+          this.pending.get(msg.id)?.reject(new Error(msg.message));
+          this.pending.delete(msg.id);
+        }
+      };
+      this.worker = worker;
+    }
+    return this.worker;
+  }
+
+  /** Correlate one request/response round trip. `w` is captured at load time
+   * (not re-read from `this.worker`) so a post-ready crash leaves this posting
+   * to the terminated worker — matching the pre-refactor hang, not a throw. */
+  private request<T>(w: Worker, body: RequestBody): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      const id = ++this.inferId;
+      this.pending.set(id, {
+        resolve: resolve as (v: unknown) => void,
+        reject,
+      });
+      w.postMessage({ ...body, id });
+    });
+  }
+
+  /** Idempotent: kicks off (or joins) the one-time bundle download + build. */
+  load(onProgress?: (p: LoadProgress) => void): Promise<NeedleClient> {
+    if (onProgress) this.progressListeners.add(onProgress);
+    this.clientPromise ??= new Promise<NeedleClient>((resolve, reject) => {
+      const w = this.getWorker();
+      this.loadReject = reject;
+      const onReady = (e: MessageEvent<WorkerResponse>) => {
+        if (e.data.type === "ready") {
+          w.removeEventListener("message", onReady);
+          this.loadReject = null;
+          // Progress only happens during this one-time load; dropping the
+          // listeners here also stops per-command closures accumulating.
+          this.progressListeners.clear();
+          resolve({
+            infer: (query, tools) =>
+              this.request<InferResult>(w, { type: "infer", query, tools }),
+            selfcheck: () => this.request<SelfCheck>(w, { type: "selfcheck" }),
+          });
+        } else if (e.data.type === "error" && e.data.id === undefined) {
+          w.removeEventListener("message", onReady);
+          this.loadReject = null;
+          reject(new Error(e.data.message));
+        }
+      };
+      w.addEventListener("message", onReady);
+      w.postMessage({ type: "load" });
+    });
+    // Failed load clears the cache so the next command retries the fetch —
+    // otherwise one network blip pins the whole session to the regex mock.
+    this.clientPromise.catch(() => {
+      this.clientPromise = null;
+    });
+    return this.clientPromise;
+  }
 }
 
-function getWorker(): Worker {
-  if (!worker) {
-    worker = new Worker(new URL("./needle-worker.ts", import.meta.url));
-    worker.onerror = (e) => crash(e.message || "needle worker crashed");
-    worker.onmessageerror = () => crash("needle worker message error");
-    worker.onmessage = (e: MessageEvent<WorkerResponse>) => {
-      const msg = e.data;
-      if (msg.type === "progress") {
-        for (const cb of progressListeners) cb(msg);
-      } else if (msg.type === "result") {
-        pending.get(msg.id)?.resolve({
-          text: msg.text,
-          backend: msg.backend,
-          encodeMs: msg.encodeMs,
-          decodeMs: msg.decodeMs,
-        });
-        pending.delete(msg.id);
-      } else if (msg.type === "selfcheck") {
-        pending.get(msg.id)?.resolve({
-          maxDiff: msg.maxDiff,
-          meanDiff: msg.meanDiff,
-          backend: msg.backend,
-        });
-        pending.delete(msg.id);
-      } else if (msg.type === "error" && msg.id !== undefined) {
-        pending.get(msg.id)?.reject(new Error(msg.message));
-        pending.delete(msg.id);
-      }
-    };
-  }
-  return worker;
-}
+/** The one default instance; module exports are thin delegates to it. */
+const defaultClient = new WorkerClient();
 
 /** Idempotent: kicks off (or joins) the one-time bundle download + build. */
 export function loadNeedle(
   onProgress?: (p: LoadProgress) => void,
 ): Promise<NeedleClient> {
-  if (onProgress) progressListeners.add(onProgress);
-  clientPromise ??= new Promise<NeedleClient>((resolve, reject) => {
-    const w = getWorker();
-    loadReject = reject;
-    const onReady = (e: MessageEvent<WorkerResponse>) => {
-      if (e.data.type === "ready") {
-        w.removeEventListener("message", onReady);
-        loadReject = null;
-        // Progress only happens during this one-time load; dropping the
-        // listeners here also stops per-command closures accumulating.
-        progressListeners.clear();
-        resolve({
-          infer(query, tools) {
-            return new Promise<InferResult>((res, rej) => {
-              const id = ++inferId;
-              pending.set(id, {
-                resolve: (v) => res(v as InferResult),
-                reject: rej,
-              });
-              w.postMessage({ type: "infer", id, query, tools });
-            });
-          },
-          selfcheck() {
-            return new Promise<SelfCheck>((res, rej) => {
-              const id = ++inferId;
-              pending.set(id, {
-                resolve: (v) => res(v as SelfCheck),
-                reject: rej,
-              });
-              w.postMessage({ type: "selfcheck", id });
-            });
-          },
-        });
-      } else if (e.data.type === "error" && e.data.id === undefined) {
-        w.removeEventListener("message", onReady);
-        loadReject = null;
-        reject(new Error(e.data.message));
-      }
-    };
-    w.addEventListener("message", onReady);
-    w.postMessage({ type: "load" });
-  });
-  // Failed load clears the cache so the next command retries the fetch —
-  // otherwise one network blip pins the whole session to the regex mock.
-  clientPromise.catch(() => {
-    clientPromise = null;
-  });
-  return clientPromise;
+  return defaultClient.load(onProgress);
 }
 
-/** wasm → mock. The mock only answers if the bundle can't load at all. */
-export const wasmNeedle: UIModel = {
-  async infer(query: string): Promise<ToolCall> {
-    try {
-      const client = await loadNeedle();
-      const r = await client.infer(query, TOOLS_JSON);
-      return toToolCall(r.text, r.backend);
-    } catch {
-      return mockNeedle.infer(query);
-    }
-  },
-};
+/** wasm → mock. The mock only answers if the bundle can't load at all.
+ * Factored so tests can bind a UIModel to an injected-spawn client. */
+export function makeWasmNeedle(client: WorkerClient): UIModel {
+  return {
+    async infer(query: string): Promise<ToolCall> {
+      try {
+        const c = await client.load();
+        const r = await c.infer(query, TOOLS_JSON);
+        return toToolCall(r.text, r.backend);
+      } catch {
+        return mockNeedle.infer(query);
+      }
+    },
+  };
+}
+
+export const wasmNeedle: UIModel = makeWasmNeedle(defaultClient);
