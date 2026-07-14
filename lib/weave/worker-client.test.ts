@@ -104,13 +104,19 @@ describe("WorkerClient", () => {
     fake.emit({ type: "ready", backend: "wasm" });
     await ready;
 
-    const inflight = wasmNeedle.infer("remove practice guitar"); // posts an infer, awaits
-    await tick(); // let the infer promise register in `pending`
+    const needle = await client.load();
+    const raw = needle.infer("remove practice guitar", "[]"); // raw in-flight request
+    const wrapped = wasmNeedle.infer("remove practice guitar"); // mock-fallback wrapper
+    raw.catch(() => {}); // observed below via rejects; avoid unhandled warning
+    await tick(); // let both infer promises register in `pending`
+    // Not vacuous: the infers actually reached the worker before the crash.
+    expect(fake.posted.filter((m) => m.type === "infer").length).toBe(2);
     fake.emitError("boom");
 
-    // The crashed request rejects internally; makeWasmNeedle catches it and
-    // returns the regex mock's answer instead of throwing.
-    const call = await inflight;
+    // The raw request rejects with the crash; makeWasmNeedle catches its own
+    // and returns the regex mock's answer instead of throwing.
+    await expect(raw).rejects.toThrow("boom");
+    const call = await wrapped;
     expect(call.source).toBe("mock");
     expect(fake.terminated).toBe(true);
   });
@@ -178,5 +184,44 @@ describe("WorkerClient", () => {
     fakes[1].emit({ type: "ready", backend: "wasm" });
     await expect(second).resolves.toBeDefined();
     expect(spawns).toBe(2);
+  });
+
+  // Scenario 6 — post-ready crash parity: clientPromise is NOT nulled, so a
+  // later load() returns the same dead client whose requests post to the
+  // captured terminated worker and hang (never resolve) — no respawn.
+  test("post-ready crash keeps the dead client: requests hang, no respawn", async () => {
+    let spawns = 0;
+    const fake = new FakeWorker();
+    const client = new WorkerClient(() => {
+      spawns++;
+      return asWorker(fake);
+    });
+
+    const ready = client.load();
+    fake.emit({ type: "ready", backend: "wasm" });
+    const first = await ready;
+
+    fake.emitError("post-ready crash");
+    expect(fake.terminated).toBe(true);
+
+    // Same resolved client comes back — only a load FAILURE nulls clientPromise.
+    const again = await client.load();
+    expect(again).toBe(first);
+    expect(spawns).toBe(1); // no respawn without a fresh load
+
+    // Its requests still post to the captured dead worker and never settle.
+    const before = fake.posted.filter((m) => m.type === "infer").length;
+    const hung = again.infer("q", "[]");
+    expect(fake.posted.filter((m) => m.type === "infer").length).toBe(
+      before + 1,
+    );
+    const outcome = await Promise.race([
+      hung.then(
+        () => "settled",
+        () => "settled",
+      ),
+      tick().then(() => "pending"),
+    ]);
+    expect(outcome).toBe("pending");
   });
 });
