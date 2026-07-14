@@ -3,8 +3,8 @@
  * job. Used by the command bar so typing doesn't wait on inference
  * (docs/prd/command-queue.md). */
 export function createQueue() {
-  let chain: Promise<void> = Promise.resolve();
-  return (job: () => Promise<void>): Promise<void> => {
+  let chain: Promise<unknown> = Promise.resolve();
+  return <T>(job: () => Promise<T>): Promise<T> => {
     const run = chain.then(job);
     // Only the chain link swallows — callers still see their own rejection.
     chain = run.catch(() => {});
