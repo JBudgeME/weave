@@ -277,7 +277,9 @@ export class NeedleModel {
     return x;
   }
 
-  /** Encode token ids -> encoder output [T, d]. */
+  /** Encode token ids -> encoder output [T, d].
+   * Invariant "Encoder adapter parity" (docs/invariants.md): this output must
+   * match GpuEncoder.encode within ~5e-6; both satisfy the Encoder seam. */
   encode(tokens: number[]): { out: Float32Array; T: number } {
     const cfg = this.cfg;
     const d = cfg.d_model;

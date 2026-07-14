@@ -66,10 +66,8 @@ $RECYCLE.BIN/
 # playwright artifacts
 /.playwright-mcp/
 
-# Needle fp16 weight blob (~52MB, too big for git).
+# Needle fp16 weight blob is committed via Git LFS (see .gitattributes).
 # Regenerate: python scripts/export-weights.py <checkpoint.pkl>
-# (manifest.json + tokenizer.json ARE committed so tokenizer tests run in CI.)
-/public/needle/weights.bin
 /public/needle/*.jsonl
 
 # scratch

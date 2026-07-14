@@ -7,6 +7,10 @@
  * proj -> sigmoid-gated residual) and the final norm as compute dispatches.
  * Output shape matches encode(): { out: Float32Array [T*d], T } so the existing
  * TS prepareCross/DecodeSession consume it unchanged.
+ *
+ * Invariant "Encoder adapter parity" (docs/invariants.md): this adapter's
+ * encode/prepareCross output must match NeedleModel's within ~5e-6; both satisfy
+ * the Encoder seam (../encoder.ts).
  */
 
 import type { CrossKV } from "../model";
