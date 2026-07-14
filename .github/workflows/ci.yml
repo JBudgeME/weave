@@ -15,7 +15,7 @@ jobs:
     name: lint · format · build · test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # LFS objects (weights.bin) are cached so CI doesn't burn LFS bandwidth
       # quota on every run — only a changed weight blob re-downloads.
