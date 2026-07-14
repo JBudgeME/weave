@@ -42,6 +42,33 @@ const NUMBERS = [
   { value: "~3min", label: "to retrain on new tools with a consumer GPU" },
 ];
 
+const COMMANDS = [
+  {
+    action: "Add a task",
+    examples: ["Add pick up groceries on Saturday", "Remember to call mom"],
+  },
+  {
+    action: "Complete a task",
+    examples: ["Mark groceries as done", "I finished calling mom"],
+  },
+  {
+    action: "Reopen a task",
+    examples: ["I didn't finish the groceries", "Uncheck call mom"],
+  },
+  {
+    action: "Rename / reschedule",
+    examples: ["Rename groceries to shopping", "Move shopping to Friday"],
+  },
+  {
+    action: "Delete a task",
+    examples: ["Delete shopping", "I don't need to call mom anymore"],
+  },
+  {
+    action: "Show tasks",
+    examples: ["Show open tasks", "What's due Friday?"],
+  },
+];
+
 const FEATURES = [
   {
     title: "Constrained output",
@@ -112,6 +139,37 @@ export default function Home() {
         </p>
         <div className="border-border bg-card flex min-h-0 flex-col rounded-2xl border p-4 shadow-sm">
           <WeaveTodo />
+        </div>
+      </section>
+
+      {/* What can you say */}
+      <section className="mx-auto w-full max-w-3xl px-4 pt-14">
+        <h2 className="text-2xl font-semibold tracking-tight">
+          What can you say?
+        </h2>
+        <p className="text-muted-foreground mt-3 leading-relaxed">
+          Type a command in your own words — there&apos;s no fixed syntax. The
+          model matches your sentence to one of six actions and pulls out the
+          details (task names can be partial matches; due dates are free text
+          like &quot;Friday&quot; or &quot;tomorrow&quot;). The suggestion chips
+          under the task list are one-click examples. If a command isn&apos;t
+          understood, you&apos;ll get a hint instead of a wrong edit — and the
+          label under the list always shows exactly which action ran.
+        </p>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          {COMMANDS.map((c) => (
+            <div
+              key={c.action}
+              className="border-border rounded-2xl border p-4"
+            >
+              <h3 className="text-sm font-medium">{c.action}</h3>
+              <ul className="text-muted-foreground mt-2 space-y-1 font-mono text-xs">
+                {c.examples.map((e) => (
+                  <li key={e}>&ldquo;{e}&rdquo;</li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
       </section>
 
