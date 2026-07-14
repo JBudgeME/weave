@@ -38,7 +38,7 @@ beforeEach(() => {
 describe("CommandSession", () => {
   test("Due filter is tracked across sequential commands", async () => {
     const session = new CommandSession(
-      fakeModel((q) => {
+      fakeModel((q): ToolCall => {
         if (q.startsWith("add"))
           return { tool: "add_task", args: { title: q.slice(4) } };
         if (q.startsWith("show"))
