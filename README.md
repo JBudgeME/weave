@@ -3,6 +3,12 @@
 ![CI](https://github.com/JBudgeME/weave/actions/workflows/ci.yml/badge.svg)
 ![License: MIT](https://img.shields.io/badge/license-MIT-8b5cf6.svg)
 
+Built on two great open-source projects:
+**[Needle](https://github.com/cactus-compute/needle)** — the 26M-parameter
+tool-calling model (JAX), distilled from Gemini by Cactus Compute — and
+**[json-render](https://github.com/vercel-labs/json-render)** — Vercel Labs'
+schema-constrained UI renderer.
+
 **The most over-engineered todo app ever built** — a proof of concept for
 tiny-model generative UI, running a finetuned 26M-parameter transformer
 entirely in your browser.
