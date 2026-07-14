@@ -11,6 +11,8 @@
  *        | { type: "error", id?, message }
  */
 
+import type { Source } from "./model";
+import type { Encoder } from "./needle/encoder";
 import { GpuEncoder } from "./needle/gpu/encoder";
 import { initGpu } from "./needle/gpu/device";
 import { NeedleInference } from "./needle/infer";
@@ -18,7 +20,9 @@ import { NeedleModel } from "./needle/model";
 import { NeedleTokenizer, type TokenizerData } from "./needle/tokenizer";
 import { Weights, type Manifest } from "./needle/weights";
 
-export type Backend = "webgpu" | "wasm";
+/** The non-mock backends the worker can run on — the real-inference subset of
+ * Source (lib/weave/model.ts). */
+export type Backend = Exclude<Source, "mock">;
 
 export type WorkerRequest =
   | { type: "load" }
@@ -144,7 +148,7 @@ function withTimeout<T>(p: Promise<T>, ms: number, what: string): Promise<T> {
 /** Encode + prepareCross for the active backend. A GPU failure (crash,
  * device lost, timeout) demotes the engine to the TS path for this and all
  * future requests — never to the mock. */
-function backendFor(engine: Engine) {
+function backendFor(engine: Engine): Encoder {
   const demote = (err: unknown) => {
     engine.gpu = null;
     engine.backend = "wasm";
