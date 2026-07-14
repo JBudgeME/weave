@@ -20,7 +20,7 @@ jobs:
       # LFS objects (weights.bin) are cached so CI doesn't burn LFS bandwidth
       # quota on every run — only a changed weight blob re-downloads.
       - name: List LFS assets for cache key
-        run: git lfs ls-files --long | cut -d ' ' -f1 | sort > .lfs-assets-id
+        run: git lfs install --local && git lfs ls-files --long | cut -d ' ' -f1 | sort > .lfs-assets-id
 
       - uses: actions/cache@v4
         with:
