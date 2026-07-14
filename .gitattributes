@@ -1,6 +1,5 @@
 # Force LF line endings on all text files so Windows/Mac don't fight.
 * text=auto eol=lf
-
 # Binary files — never normalize.
 *.png    binary
 *.jpg    binary
@@ -15,6 +14,6 @@
 *.otf    binary
 *.eot    binary
 *.pdf    binary
-
 # Lockfile — keep as LF text so diffs are clean.
 bun.lock text eol=lf
+public/needle/weights.bin filter=lfs diff=lfs merge=lfs -text

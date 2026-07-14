@@ -6,9 +6,9 @@ import { JSONUIProvider, Renderer } from "@json-render/react";
 import { toast } from "sonner";
 
 import { callApi, type TaskData } from "@/lib/weave/api";
+import { CommandSession } from "@/lib/weave/command-session";
 import { type ToolCall } from "@/lib/weave/model";
-import { createQueue } from "@/lib/weave/queue";
-import { loadNeedle, wasmNeedle } from "@/lib/weave/wasm-model";
+import { loadNeedle } from "@/lib/weave/wasm-model";
 import { registry } from "@/lib/weave/registry";
 import { tasksSpec } from "@/lib/weave/templates";
 
@@ -30,63 +30,47 @@ function toolCallLabel(call: ToolCall): string {
 
 export function WeaveTodo() {
   const [spec, setSpec] = useState<Spec | null>(null);
-  // Ref, not state: queued execs must see the *latest* filter, not the one
-  // captured when the command was typed (review: stale-closure bug).
-  const filterRef = useRef("all");
   const [query, setQuery] = useState("");
   const [pending, setPending] = useState(0);
   const [lastCall, setLastCall] = useState<ToolCall | null>(null);
   const [loadPct, setLoadPct] = useState<number | null>(null);
 
-  function fetchTasks(nextFilter: string): Promise<TaskData> {
-    return callApi({
-      tool: "show_tasks",
-      args: { filter: nextFilter },
-    }) as Promise<TaskData>;
-  }
-
   useEffect(() => {
-    void fetchTasks("all").then((d) => setSpec(tasksSpec(d)));
+    void (
+      callApi({
+        tool: "show_tasks",
+        args: { filter: "all" },
+      }) as Promise<TaskData>
+    ).then((d) => setSpec(tasksSpec(d)));
   }, []);
 
-  // Commands queue FIFO so the input never locks while one is running; the
-  // worker serializes inference anyway (docs/prd/command-queue.md).
-  const enqueue = useRef(createQueue()).current;
+  // The command pipeline (model → API → spec, FIFO queue, filter state)
+  // lives in CommandSession; the component only renders its results.
+  const session = useRef(new CommandSession()).current;
 
   function run(q: string) {
     const text = q.trim();
     if (!text) return;
     setQuery("");
     setPending((n) => n + 1);
-    void enqueue(() => exec(text))
-      .catch((err) => toast.error(`Command failed: ${String(err)}`))
-      .finally(() => setPending((n) => n - 1));
-  }
-
-  async function exec(text: string) {
     void loadNeedle((p) => {
       const pct = Math.round((p.loaded / p.total) * 100);
       setLoadPct(pct === 100 ? null : pct);
     }).catch(() => setLoadPct(null));
-    const call = await wasmNeedle.infer(text);
-    setLoadPct(null);
-    setLastCall(call);
-    if (call.tool === "show_help") {
-      toast.info(
-        'Try "Add buy milk", "Rename practice guitar to practice piano", "I didn\'t finish buy milk", or "What\'s due Friday?".',
-      );
-      return;
-    }
-    const data = (await callApi(call)) as TaskData | null; // mutations happen here
-    if (data?.note) toast(data.note);
-    const nextFilter =
-      call.tool === "show_tasks"
-        ? call.args.filter || "all"
-        : filterRef.current;
-    filterRef.current = nextFilter;
-    // Render the view callApi returned — it already reflects the mutation
-    // and honors args (like show_tasks' due) that a refetch would drop.
-    setSpec(tasksSpec(data ?? (await fetchTasks(nextFilter))));
+    void session
+      .run(text)
+      .then((r) => {
+        setLoadPct(null);
+        setLastCall(r.call);
+        if (r.call.tool === "show_help") {
+          if (r.note) toast.info(r.note);
+          return;
+        }
+        if (r.note) toast(r.note);
+        if (r.spec) setSpec(r.spec);
+      })
+      .catch((err) => toast.error(`Command failed: ${String(err)}`))
+      .finally(() => setPending((n) => n - 1));
   }
 
   return (

@@ -113,12 +113,16 @@ SentencePiece word-boundary spaces. The model was fine all along.
 **To run the app (inference only):**
 
 - [Bun](https://bun.sh) ≥ 1.x
+- [Git LFS](https://git-lfs.com) — `weights.bin` (~52MB) is committed via
+  LFS. Clone without LFS installed and you get a ~130-byte pointer file
+  instead of the weights: the app silently degrades to the regex mock. Run
+  `git lfs install` once before cloning (or `git lfs pull` after).
 - A browser. WebGPU (Chrome/Edge 113+) gets ~350–430ms commands; anything
   else falls back to the pure-TS path (~2.8s); no JS weight-bundle load at
   all falls back to a regex mock.
-- The weight bundle (`public/needle/` — weights.bin ~52MB, manifest,
-  tokenizer, eval JSONLs). **It is gitignored**: build it yourself via the
-  training steps below.
+- The weight bundle (`public/needle/` — weights.bin via LFS, manifest,
+  tokenizer; eval JSONLs are gitignored). Rebuild from scratch via the
+  training steps below if you're retraining.
 
 **To train / regenerate the bundle:**
 
