@@ -1,0 +1,140 @@
+[
+  {
+    "ids": [
+      4, 356, 294, 264, 6186, 8062, 2269, 265, 393, 282, 674, 264, 820, 302,
+      6462, 8055, 472, 503
+    ],
+    "text": "<tool_call> [{\"name\":\"complete_task\",\"arguments\":{\"title\":\"email the landlord\"}}]"
+  },
+  {
+    "ids": [
+      4, 356, 294, 264, 507, 6186, 8062, 2269, 265, 393, 282, 674, 264, 2810,
+      8056, 302, 1363, 503
+    ],
+    "text": "<tool_call> [{\"name\":\"uncomplete_task\",\"arguments\":{\"title\":\"wash the car\"}}]"
+  },
+  {
+    "ids": [
+      4, 356, 294, 264, 1051, 8062, 2269, 265, 393, 282, 674, 264, 6379, 6059,
+      3625, 1456, 345, 711, 471, 503
+    ],
+    "text": "<tool_call> [{\"name\":\"delete_task\",\"arguments\":{\"title\":\"buy birthday gift for Sam\"}}]"
+  },
+  {
+    "ids": [
+      4, 356, 294, 264, 2692, 8062, 2269, 265, 393, 282, 674, 264, 820, 302,
+      6462, 8055, 472, 265, 833, 8062, 674, 264, 3103, 302, 6239, 503
+    ],
+    "text": "<tool_call> [{\"name\":\"edit_task\",\"arguments\":{\"title\":\"email the landlord\",\"new_title\":\"pay the rent\"}}]"
+  },
+  {
+    "ids": [
+      4, 356, 294, 264, 3344, 8062, 4759, 265, 393, 282, 836, 264, 4048, 503
+    ],
+    "text": "<tool_call> [{\"name\":\"show_tasks\",\"arguments\":{\"filter\":\"done\"}}]"
+  },
+  {
+    "ids": [
+      4, 356, 294, 264, 2692, 8062, 2269, 265, 393, 282, 674, 264, 2448, 302,
+      614, 5916, 322, 1195, 265, 833, 8062, 2205, 264, 1775, 503
+    ],
+    "text": "<tool_call> [{\"name\":\"edit_task\",\"arguments\":{\"title\":\"sign the permission slip\",\"new_due\":\"today\"}}]"
+  },
+  {
+    "ids": [
+      4, 356, 294, 264, 2692, 8062, 2269, 265, 393, 282, 674, 264, 8069, 5088,
+      302, 5000, 265, 833, 8062, 2205, 264, 8040, 268, 1176, 503
+    ],
+    "text": "<tool_call> [{\"name\":\"edit_task\",\"arguments\":{\"title\":\"walk the dog\",\"new_due\":\"tonight\"}}]"
+  },
+  {
+    "ids": [
+      4, 356, 294, 264, 872, 8062, 2269, 265, 393, 282, 674, 264, 6379, 6059,
+      3625, 1456, 345, 711, 471, 503
+    ],
+    "text": "<tool_call> [{\"name\":\"add_task\",\"arguments\":{\"title\":\"buy birthday gift for Sam\"}}]"
+  },
+  {
+    "ids": [
+      4, 356, 294, 264, 2692, 8062, 2269, 265, 393, 282, 674, 264, 6137, 345,
+      302, 1985, 265, 833, 8062, 674, 264, 1287, 1205, 302, 1552, 625, 503
+    ],
+    "text": "<tool_call> [{\"name\":\"edit_task\",\"arguments\":{\"title\":\"pack for the trip\",\"new_title\":\"take out the trash\"}}]"
+  },
+  {
+    "ids": [
+      4, 356, 294, 264, 3344, 8062, 4759, 265, 393, 282, 836, 264, 924, 503
+    ],
+    "text": "<tool_call> [{\"name\":\"show_tasks\",\"arguments\":{\"filter\":\"open\"}}]"
+  },
+  {
+    "ids": [
+      4, 356, 294, 264, 872, 8062, 2269, 265, 393, 282, 674, 264, 383, 8073,
+      302, 1910, 8061, 309, 621, 366, 8040, 503
+    ],
+    "text": "<tool_call> [{\"name\":\"add_task\",\"arguments\":{\"title\":\"fix the leaky faucet\"}}]"
+  },
+  {
+    "ids": [
+      4, 356, 294, 264, 3344, 8062, 4759, 265, 393, 282, 836, 264, 588, 503
+    ],
+    "text": "<tool_call> [{\"name\":\"show_tasks\",\"arguments\":{\"filter\":\"all\"}}]"
+  },
+  {
+    "ids": [
+      4, 356, 294, 264, 872, 8062, 2269, 265, 393, 282, 674, 264, 1115, 302,
+      6995, 411, 3479, 503
+    ],
+    "text": "<tool_call> [{\"name\":\"add_task\",\"arguments\":{\"title\":\"plan the weekend menu\"}}]"
+  },
+  {
+    "ids": [
+      4, 356, 294, 264, 6186, 8062, 2269, 265, 393, 282, 674, 264, 6379, 416,
+      471, 1151, 503
+    ],
+    "text": "<tool_call> [{\"name\":\"complete_task\",\"arguments\":{\"title\":\"buy stamps\"}}]"
+  },
+  {
+    "ids": [
+      4, 356, 294, 264, 2692, 8062, 2269, 265, 393, 282, 674, 264, 383, 8073,
+      302, 1910, 8061, 309, 621, 366, 8040, 265, 833, 8062, 2205, 264, 8095,
+      3700, 503
+    ],
+    "text": "<tool_call> [{\"name\":\"edit_task\",\"arguments\":{\"title\":\"fix the leaky faucet\",\"new_due\":\"Friday\"}}]"
+  },
+  {
+    "ids": [
+      4, 356, 294, 264, 1051, 8062, 2269, 265, 393, 282, 674, 264, 266, 2690,
+      302, 5000, 1032, 503
+    ],
+    "text": "<tool_call> [{\"name\":\"delete_task\",\"arguments\":{\"title\":\"refill the dog food\"}}]"
+  },
+  {
+    "ids": [
+      4, 356, 294, 264, 2692, 8062, 2269, 265, 393, 282, 674, 264, 5822, 302,
+      1249, 265, 833, 8062, 674, 264, 8069, 5088, 302, 5000, 503
+    ],
+    "text": "<tool_call> [{\"name\":\"edit_task\",\"arguments\":{\"title\":\"review the budget\",\"new_title\":\"walk the dog\"}}]"
+  },
+  {
+    "ids": [
+      4, 356, 294, 264, 1051, 8062, 2269, 265, 393, 282, 674, 264, 6480, 2606,
+      2678, 7916, 503
+    ],
+    "text": "<tool_call> [{\"name\":\"delete_task\",\"arguments\":{\"title\":\"practice guitar\"}}]"
+  },
+  {
+    "ids": [
+      4, 356, 294, 264, 507, 6186, 8062, 2269, 265, 393, 282, 674, 264, 4642,
+      302, 2402, 6772, 274, 1448, 503
+    ],
+    "text": "<tool_call> [{\"name\":\"uncomplete_task\",\"arguments\":{\"title\":\"charge the drill batteries\"}}]"
+  },
+  {
+    "ids": [
+      4, 356, 294, 264, 507, 6186, 8062, 2269, 265, 393, 282, 674, 264, 4209,
+      922, 4881, 6252, 503
+    ],
+    "text": "<tool_call> [{\"name\":\"uncomplete_task\",\"arguments\":{\"title\":\"pick up dry cleaning\"}}]"
+  }
+]

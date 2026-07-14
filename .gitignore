@@ -1,0 +1,86 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# testing
+/coverage
+
+# env (commit .env.example if you add one)
+.env
+.env.*
+!.env.example
+
+# vercel
+.vercel
+
+# bun
+.bun
+
+# debug logs
+*-debug.log*
+*.log
+
+# editors / IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+Icon
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+*.stackdump
+
+# misc
+*.pem
+
+# generated finetune datasets (bun scripts/gen-finetune-data.ts)
+/finetune/
+
+# playwright artifacts
+/.playwright-mcp/
+
+# Needle fp16 weight blob (~52MB, too big for git).
+# Regenerate: python scripts/export-weights.py <checkpoint.pkl>
+# (manifest.json + tokenizer.json ARE committed so tokenizer tests run in CI.)
+/public/needle/weights.bin
+/public/needle/*.jsonl
+
+# scratch
+/scratch_*.ts
+/scratch_*.log
+
+# private workflow files (agent instructions, SOP kit, process tooling)
+/.claude/
+/CLAUDE.md
+/AGENTS.md
+/CONTEXT.md
+/docs/agents/
+/scripts/open-work.ts
+/scripts/setup-github-labels.sh
