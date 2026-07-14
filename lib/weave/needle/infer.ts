@@ -5,6 +5,7 @@
  * tools string is fed verbatim), so it is intentionally not ported.
  */
 
+import type { Encoder } from "./encoder";
 import { type CrossKV, NeedleModel } from "./model";
 import type { NeedleTokenizer } from "./tokenizer";
 import type { Manifest } from "./weights";
@@ -79,13 +80,7 @@ export class NeedleInference {
   async generateAsync(
     query: string,
     tools: string,
-    backend: {
-      encode: (tokens: number[]) => Promise<{ out: Float32Array; T: number }>;
-      prepareCross: (
-        out: Float32Array,
-        T: number,
-      ) => CrossKV[] | Promise<CrossKV[]>;
-    },
+    backend: Encoder,
   ): Promise<{ text: string; encodeMs: number; decodeMs: number }> {
     const input = this.encInput(query, tools);
     const t0 = performance.now();
