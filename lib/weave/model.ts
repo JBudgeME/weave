@@ -3,11 +3,15 @@
  * ToolCall satisfies UIModel — today a keyword mock, later Needle in WASM.
  */
 
+/** Which backend produced a ToolCall. Owned here; the worker's Backend type
+ * (lib/weave/needle-worker.ts) is the non-mock subset. */
+export type Source = "webgpu" | "wasm" | "mock";
+
 export interface ToolCall {
   tool: string;
   args: Record<string, string>;
-  /** Which model produced this call ("needle" | "mock"). */
-  source?: string;
+  /** Which model produced this call. */
+  source?: Source;
 }
 
 export interface UIModel {
