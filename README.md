@@ -1,5 +1,8 @@
 # weave 🧵
 
+![CI](https://github.com/JBudgeME/weave/actions/workflows/ci.yml/badge.svg)
+![License: MIT](https://img.shields.io/badge/license-MIT-8b5cf6.svg)
+
 **The most over-engineered todo app ever built** — a proof of concept for
 tiny-model generative UI, running a finetuned 26M-parameter transformer
 entirely in your browser.
